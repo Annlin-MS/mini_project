@@ -1,0 +1,34 @@
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+
+# Build outputs
+build/
+
+# Android
+.gradle/
+local.properties
+*.iml
+.idea/
+.DS_Store
+gradle-wrapper.jar
+/captures/
+/gradlew
+/gradlew.bat
+GeneratedPluginRegistrant.java
+.cxx/
+
+# iOS
+Pods/
+DerivedData/
+*.xcworkspace
+
+# Keystore (never upload your signing keys!)
+key.properties
+**/*.keystore
+**/*.jks
+
+# Misc
+*.log

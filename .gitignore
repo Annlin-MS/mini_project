@@ -1,0 +1,48 @@
+# Generic .gitignore for Flutter projects
+
+# Compiled/generated files
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.vscode/
+build/
+coverage/
+doc/api/
+ios/.symlinks/
+android/.cxx/
+android/.gradle/
+android/app/build/
+android/build/
+ios/Flutter/App.framework/
+ios/Flutter/Flutter.framework/
+ios/Flutter/Generated.xcconfig
+ios/Pods/
+ios/Runner/*.xcworkspace/
+ios/Runner/project.xcworkspace/
+ios/Runner/xcuserdata/
+ios/Runner/ServiceDefinitions.json
+macos/build/
+macos/Flutter/ephemeral/
+linux/build/
+linux/flutter/ephemeral/
+windows/build/
+windows/flutter/ephemeral/
+
+# IDE-specific files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Environment variables
+.env
+.env.*
+
+# Local specific files
+*~
+*.log
+*.bak
+*.swp
+.DS_Store
+Thumbs.db

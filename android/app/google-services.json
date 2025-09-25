@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "55602774657",
+    "project_id": "pathayam-8b95b",
+    "storage_bucket": "pathayam-8b95b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55602774657:android:80db8a6cd509e8b496c380",
+        "android_client_info": {
+          "package_name": "com.example.miniproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_TmFJir5Klo57ye1Ws5KNIzzQ0xsYQ28"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
