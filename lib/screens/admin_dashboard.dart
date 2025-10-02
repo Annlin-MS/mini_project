@@ -1,18 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../models/complaint_model.dart';
-import '../models/dealer_model.dart';
-import '../models/shop_model.dart';
 import '../models/ration_card.dart';
-import '../services/complaint_service.dart';
+import 'add_edit_ration_card.dart';
 import 'admin_member_management.dart';
 import 'admin_dealer_management.dart';
 import 'admin_stock_management.dart';
 import 'admin_analytics.dart';
-import 'admin_message_center.dart';
 import 'admin_complaint_management.dart';
-import 'add_edit_ration_card.dart';
+import 'admin_message_center.dart';
 
 class AdminDashboard extends StatefulWidget {
   final String adminId;
@@ -30,6 +24,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   int _currentIndex = 0;
+
   final List<String> _appBarTitles = [
     'Admin Dashboard',
     'User Management',
@@ -42,7 +37,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     'Messages',
   ];
 
-  // Kerala districts data - REPLACED mock Firebase queries
+  // Kerala districts mock data
   final Map<String, Map<String, dynamic>> keralaDistricts = {
     'Thiruvananthapuram': {'shops': 450, 'cards': 125000, 'dealers': 450, 'population': 3301427},
     'Kollam': {'shops': 380, 'cards': 98000, 'dealers': 380, 'population': 2635375},
@@ -60,22 +55,45 @@ class _AdminDashboardState extends State<AdminDashboard> {
     'Kasaragod': {'shops': 200, 'cards': 48000, 'dealers': 200, 'population': 1307375}
   };
 
-  // Calculate Kerala totals
-  int get totalShops => keralaDistricts.values
-      .map((district) => district['shops'] as int)
-      .reduce((a, b) => a + b);
+  // Mock Ration Cards
+  final List<RationCard> mockCards = [
+    // RationCard(
+    //     id: '1',
+    //     cardNumber: 'RC1001',
+    //     headOfFamily: 'John Doe',
+    //     cardType: 'APL',
+    //     district: 'Thiruvananthapuram',
+    //     memberCount: 4,
+    //     isActive: true),
+    // RationCard(
+    //     id: '2',
+    //     cardNumber: 'RC1002',
+    //     headOfFamily: 'Jane Smith',
+    //     cardType: 'BPL',
+    //     district: 'Kollam',
+    //     memberCount: 3,
+    //     isActive: true),
+    // RationCard(
+    //     id: '3',
+    //     cardNumber: 'RC1003',
+    //     headOfFamily: 'Ali Khan',
+    //     cardType: 'PHH',
+    //     district: 'Ernakulam',
+    //     memberCount: 5,
+    //     isActive: false),
+  ];
 
-  int get totalCards => keralaDistricts.values
-      .map((district) => district['cards'] as int)
-      .reduce((a, b) => a + b);
+  // Mock recent activities
+  final List<Map<String, String>> mockActivities = [
+    {'description': 'Added new ration card', 'user': 'Admin', 'timestamp': '2h ago'},
+    {'description': 'Deactivated card RC1003', 'user': 'Admin', 'timestamp': '5h ago'},
+    {'description': 'Updated dealer info', 'user': 'Admin', 'timestamp': '1d ago'},
+  ];
 
-  int get totalDealers => keralaDistricts.values
-      .map((district) => district['dealers'] as int)
-      .reduce((a, b) => a + b);
-
-  int get totalPopulation => keralaDistricts.values
-      .map((district) => district['population'] as int)
-      .reduce((a, b) => a + b);
+  int get totalShops => keralaDistricts.values.map((e) => e['shops'] as int).reduce((a, b) => a + b);
+  int get totalDealers => keralaDistricts.values.map((e) => e['dealers'] as int).reduce((a, b) => a + b);
+  int get totalCards => keralaDistricts.values.map((e) => e['cards'] as int).reduce((a, b) => a + b);
+  int get totalPopulation => keralaDistricts.values.map((e) => e['population'] as int).reduce((a, b) => a + b);
 
   @override
   Widget build(BuildContext context) {
@@ -87,48 +105,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: Stack(
-              children: [
-                const Icon(Icons.notifications),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(1),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    constraints: const BoxConstraints(minWidth: 12, minHeight: 12),
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('complaints')
-                          .where('status', isEqualTo: 'pending')
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const SizedBox.shrink();
-                        final count = snapshot.data!.docs.length;
-                        return Text(
-                          count > 99 ? '99+' : '$count',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            onPressed: () => _navigateToComplaints(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => _showSettingsDialog(),
-          ),
+              icon: const Icon(Icons.notifications),
+              onPressed: () => setState(() => _currentIndex = 7)),
+          IconButton(icon: const Icon(Icons.settings), onPressed: _showSettingsDialog),
         ],
       ),
       drawer: _buildDrawer(),
@@ -166,14 +145,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   child: Icon(Icons.admin_panel_settings, size: 40, color: Colors.red),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  widget.adminName,
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Text(
-                  'System Administrator',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ),
+                Text(widget.adminName,
+                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('System Administrator', style: TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
@@ -232,214 +206,97 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildOverview() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Welcome Card
-          Card(
-            color: Colors.red.shade50,
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Icon(Icons.admin_panel_settings, size: 40, color: Colors.red.shade700),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Welcome, ${widget.adminName}!',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                        const Text('Kerala State Public Distribution System',
-                            style: TextStyle(fontSize: 14, color: Colors.grey)),
-                      ],
-                    ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Welcome Card
+        Card(
+          color: Colors.red.shade50,
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Icon(Icons.admin_panel_settings, size: 40, color: Colors.red.shade700),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Welcome, ${widget.adminName}!',
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                      const Text('Kerala State Public Distribution System',
+                          style: TextStyle(fontSize: 14, color: Colors.grey)),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-          const Text('Kerala State Overview',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-
-          // Kerala Statistics Cards
-          Row(children: [
-            _statCard('Total Shops', totalShops.toString(), Icons.storefront, Colors.orange),
-            const SizedBox(width: 12),
-            _statCard('Total Dealers', totalDealers.toString(), Icons.person, Colors.green),
-          ]),
-          const SizedBox(height: 12),
-          Row(children: [
-            _statCard('Ration Cards', '${(totalCards / 100000).toStringAsFixed(1)}L',
-                Icons.credit_card, Colors.purple),
-            const SizedBox(width: 12),
-            _statCard('Districts', '14', Icons.location_city, Colors.blue),
-          ]),
-          const SizedBox(height: 12),
-          Row(children: [
-            _statCard('Population', '${(totalPopulation / 10000000).toStringAsFixed(1)}Cr',
-                Icons.people, Colors.teal),
-            const SizedBox(width: 12),
-            _statCard('Coverage', '${((totalCards * 4.2 / totalPopulation) * 100).toStringAsFixed(1)}%',
-                Icons.pie_chart, Colors.indigo),
-          ]),
-
-          const SizedBox(height: 20),
-
-          // Districts Summary Card - FIXED CODE HERE
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('District Wise Distribution',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-
-                  // Top 5 Districts by Cards - CORRECTED VERSION
-                  ...() {
-                    // Convert to list and sort separately
-                    var entries = keralaDistricts.entries.toList();
-                    entries.sort((a, b) => (b.value['cards'] as int).compareTo(a.value['cards'] as int));
-
-                    // Take top 5 and convert to widgets
-                    return entries.take(5).map((entry) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(entry.key, style: const TextStyle(fontWeight: FontWeight.w500)),
-                          Row(
-                            children: [
-                              Text('${(entry.value['cards'] / 1000).toStringAsFixed(0)}K cards'),
-                              const SizedBox(width: 8),
-                              Text('${entry.value['shops']} shops',
-                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ));
-                  }(),
-
-                  const SizedBox(height: 12),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => setState(() => _currentIndex = 5),
-                      child: const Text('View All Districts →'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Recent Activities
-          const SizedBox(height: 20),
-          const Text('Recent Activities', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('activities')
-                .orderBy('timestamp', descending: true)
-                .limit(5)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                );
-              }
-
-              final activities = snapshot.data!.docs;
-              if (activities.isEmpty) {
-                return const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No recent activities'),
-                  ),
-                );
-              }
-
-              return Card(
-                child: Column(
-                  children: activities.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blue.shade100,
-                        child: Icon(Icons.history, color: Colors.blue.shade700),
-                      ),
-                      title: Text(data['description'] ?? 'Activity'),
-                      subtitle: Text(data['user'] ?? 'System'),
-                      trailing: Text(
-                        _formatTimestamp(data['timestamp']),
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    );
-                  }).toList(),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ],
-      ),
+        ),
+
+        const SizedBox(height: 20),
+        const Text('Kerala State Overview', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+
+        // Statistics Cards
+        Row(children: [
+          _statCard('Total Shops', totalShops.toString(), Icons.storefront, Colors.orange),
+          const SizedBox(width: 12),
+          _statCard('Total Dealers', totalDealers.toString(), Icons.person, Colors.green),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          _statCard('Ration Cards', '${(totalCards / 100000).toStringAsFixed(1)}L', Icons.credit_card, Colors.purple),
+          const SizedBox(width: 12),
+          _statCard('Districts', '14', Icons.location_city, Colors.blue),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          _statCard('Population', '${(totalPopulation / 10000000).toStringAsFixed(1)}Cr', Icons.people, Colors.teal),
+          const SizedBox(width: 12),
+          _statCard('Coverage', '${((totalCards * 4.2 / totalPopulation) * 100).toStringAsFixed(1)}%', Icons.pie_chart, Colors.indigo),
+        ]),
+
+        const SizedBox(height: 20),
+        const Text('Recent Activities', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+
+        Card(
+          child: Column(
+            children: mockActivities.map((activity) {
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.blue.shade100,
+                  child: Icon(Icons.history, color: Colors.blue.shade700),
+                ),
+                title: Text(activity['description']!),
+                subtitle: Text(activity['user']!),
+                trailing: Text(activity['timestamp']!),
+              );
+            }).toList(),
+          ),
+        ),
+      ]),
     );
   }
 
   Widget _buildDistricts() {
-    int totalCards = keralaDistricts.values
-        .map((district) => district['cards'] as int)
-        .reduce((a, b) => a + b);
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Kerala Districts (14)',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              Text('Total: ${(totalCards / 100000).toStringAsFixed(1)}L Cards',
-                  style: TextStyle(color: Colors.grey.shade600)),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          ...keralaDistricts.entries.map((district) => Card(
+        children: keralaDistricts.entries.map((district) {
+          return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: Colors.blue.shade100,
-                child: Text(
-                  district.key.substring(0, 2).toUpperCase(),
-                  style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold),
-                ),
+                child: Text(district.key.substring(0, 2).toUpperCase(),
+                    style: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold)),
               ),
               title: Text(district.key, style: const TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Shops: ${district.value['shops']} • Dealers: ${district.value['dealers']}'),
-                  Text('Cards: ${(district.value['cards'] / 1000).toStringAsFixed(0)}K • Population: ${(district.value['population'] / 100000).toStringAsFixed(1)}L'),
-                ],
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () => _showDistrictDetails(district.key, district.value),
-              isThreeLine: true,
+              subtitle: Text('Shops: ${district.value['shops']} • Dealers: ${district.value['dealers']} • Cards: ${district.value['cards']}'),
             ),
-          )),
-        ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -448,85 +305,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Ration Card Management',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              ElevatedButton.icon(
-                onPressed: _addNewRationCard,
-                icon: const Icon(Icons.add),
-                label: const Text('New Card'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade700,
-                  foregroundColor: Colors.white,
-                ),
+        children: mockCards.map((card) {
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: _getCardColor(card.cardType),
+                child: Text(card.cardNumber.substring(0, 2), style: const TextStyle(color: Colors.white)),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('ration_cards')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              final cards = snapshot.data!.docs;
-              if (cards.isEmpty) {
-                return const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(
-                      child: Text('No ration cards found'),
-                    ),
-                  ),
-                );
-              }
-
-              return Column(
-                children: cards.map((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: _getCardColor(data['cardType']),
-                        child: Text(
-                          data['cardNumber']?.toString().substring(0, 2) ?? 'RC',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      title: Text(data['headOfFamily'] ?? 'Unknown'),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Card: ${data['cardNumber']} • Type: ${data['cardType']}'),
-                          Text('Members: ${data['memberCount'] ?? 0} • District: ${data['district'] ?? 'N/A'}'),
-                        ],
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (action) => _handleCardAction(action, doc),
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          const PopupMenuItem(value: 'view', child: Text('View Details')),
-                          const PopupMenuItem(value: 'deactivate', child: Text('Deactivate')),
-                        ],
-                      ),
-                      isThreeLine: true,
-                    ),
-                  );
-                }).toList(),
-              );
-            },
-          ),
-        ],
+              title: Text(card.headOfFamily),
+              subtitle: Text('Card: ${card.cardNumber} • Type: ${card.cardType} • Members: ${card.memberCount}'),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -549,51 +340,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  void _showDistrictDetails(String districtName, Map<String, dynamic> data) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.location_city, color: Colors.blue.shade700),
-            const SizedBox(width: 8),
-            Text(districtName),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _detailRow('Total Shops:', '${data['shops']}'),
-            _detailRow('Total Dealers:', '${data['dealers']}'),
-            _detailRow('Ration Cards:', '${data['cards']}'),
-            _detailRow('Population:', '${(data['population'] / 100000).toStringAsFixed(1)}L'),
-            _detailRow('Coverage:', '${((data['cards'] * 4.2 / data['population']) * 100).toStringAsFixed(1)}%'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-          Text(value, style: const TextStyle(color: Colors.blue)),
-        ],
-      ),
-    );
-  }
-
   Color _getCardColor(String? cardType) {
     switch (cardType?.toLowerCase()) {
       case 'bpl':
@@ -609,113 +355,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  void _addNewRationCard() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddEditRationCard()),
-    );
-  }
-
-  // FIXED: Updated to properly handle RationCard objects
-  void _handleCardAction(String action, DocumentSnapshot doc) {
-    switch (action) {
-      case 'edit':
-        try {
-          // Convert DocumentSnapshot to RationCard object with ID
-          final data = doc.data() as Map<String, dynamic>;
-          final rationCard = RationCard.fromMap(data, doc.id);
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddEditRationCard(rationCard: rationCard),
-            ),
-          );
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error loading card: $e')),
-          );
-        }
-        break;
-      case 'view':
-        _showCardDetails(doc);
-        break;
-      case 'deactivate':
-        _deactivateCard(doc);
-        break;
-    }
-  }
-
-  void _showCardDetails(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Card Details - ${data['cardNumber']}'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _detailRow('Head of Family:', data['headOfFamily'] ?? 'N/A'),
-              _detailRow('Card Type:', data['cardType'] ?? 'N/A'),
-              _detailRow('District:', data['district'] ?? 'N/A'),
-              _detailRow('Members:', '${data['memberCount'] ?? 0}'),
-              _detailRow('Status:', data['isActive'] == true ? 'Active' : 'Inactive'),
-              _detailRow('Shop ID:', data['shopId'] ?? 'N/A'),
-              _detailRow('Annual Income:', data['annualIncome'] != null ? '₹${data['annualIncome']}' : 'N/A'),
-              _detailRow('Job:', data['job'] ?? 'N/A'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _deactivateCard(DocumentSnapshot doc) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Deactivate Card'),
-        content: const Text('Are you sure you want to deactivate this ration card?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await doc.reference.update({'isActive': false});
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Card deactivated successfully')),
-                );
-              } catch (e) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error deactivating card: $e')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Deactivate'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _navigateToComplaints() {
-    setState(() => _currentIndex = 7);
-  }
-
   void _showSettingsDialog() {
     showDialog(
       context: context,
@@ -724,81 +363,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
         content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: Icon(Icons.person),
-              title: Text('Profile Settings'),
-            ),
-            ListTile(
-              leading: Icon(Icons.security),
-              title: Text('Security'),
-            ),
-            ListTile(
-              leading: Icon(Icons.help),
-              title: Text('Help & Support'),
-            ),
+            ListTile(leading: Icon(Icons.person), title: Text('Profile Settings')),
+            ListTile(leading: Icon(Icons.security), title: Text('Security')),
+            ListTile(leading: Icon(Icons.help), title: Text('Help & Support')),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
         ],
       ),
     );
   }
 
   void _logout() {
+    // Mock logout
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        content: const Text('You are logged out (mock).'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await FirebaseAuth.instance.signOut();
-                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error signing out: $e')),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Logout'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
         ],
       ),
     );
-  }
-
-  String _formatTimestamp(dynamic timestamp) {
-    if (timestamp == null) return 'Unknown';
-
-    DateTime dateTime;
-    if (timestamp is Timestamp) {
-      dateTime = timestamp.toDate();
-    } else if (timestamp is String) {
-      dateTime = DateTime.tryParse(timestamp) ?? DateTime.now();
-    } else {
-      return 'Unknown';
-    }
-
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else {
-      return '${difference.inDays}d ago';
-    }
   }
 }
